@@ -1,18 +1,24 @@
-use clap::Clap;
+use clap::{App,Arg};
 
-
-#[derive(Clap)]
-#[clap(version = "0.0.1", author = "Moritz H.")]
-struct Opts {
-    /// Sets a custom config file. Could have been an Option<T> with no default too
-    #[clap(short, long, default_value = "default.conf")]
-    currency_from: String,
-    currency_to: String,
-    amount: usize,
-    to: String,
-    /// A level of verbosity, and can be used multiple times
-    #[clap(short, long, parse(from_occurrences))]
-    verbose: i32,
-    #[clap(subcommand)]
-    subcmd: SubCommand,
+pub fn build_cli() -> App<'static> {
+    App::new("Currency Converter")
+        .about("Converts an amount of a currency to another currency")
+        .version("0.0.1")
+        .author("Moritz H.")
+        .arg(
+            Arg::with_name("amount")
+                .about("how much of the input currency")
+                .index(1),
+        )
+        .arg(
+            Arg::with_name("input")
+                .about("input currency, e.g. USD, Euro")
+                .index(2),
+        )
+        .arg(
+            Arg::with_name("output")
+                .about("output currency, e.g. USD, Euro")
+                .index(3)
+                .multiple(true)
+        )
 }

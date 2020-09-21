@@ -1,37 +1,17 @@
+mod cli;
 mod currency;
 mod providers;
 
 use std::str::FromStr;
 
-use clap::{App,Arg};
-
 use providers::exchangeratesapi::ExchangeRatesApiProvider;
 use providers::provider::{Provider};
 use currency::Currency;
+use cli::build_cli;
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
-    let matches = App::new("Currency Converter")
-        .about("Converts an amount of a currency to another currency")
-        .version("0.0.1")
-        .author("Moritz H.")
-        .arg(
-            Arg::with_name("amount")
-                .about("how much of the input currency")
-                .index(1),
-        )
-        .arg(
-            Arg::with_name("input")
-                .about("input currency, e.g. USD, Euro")
-                .index(2),
-        )
-        .arg(
-            Arg::with_name("output")
-                .about("output currency, e.g. USD, Euro")
-                .index(3)
-                .multiple(true)
-        )
-        .get_matches();
+    let matches = build_cli().get_matches();
 
     let amount = matches.value_of("amount").map(str::parse::<f64>).unwrap().unwrap();
     let input = matches.value_of("input").map(Currency::from_str).unwrap().unwrap();
