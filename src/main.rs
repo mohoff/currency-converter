@@ -1,16 +1,16 @@
-mod amount;
 mod currency;
 mod providers;
 
 use std::str::FromStr;
 
 use clap::{App,Arg};
-use amount::Amount;
-use providers::exchangeratesapi::{Provider,ProviderT};
+
+use providers::exchangeratesapi::ExchangeRatesApiProvider;
+use providers::provider::{Provider};
 use currency::Currency;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), anyhow::Error> {
     let matches = App::new("Currency Converter")
         .about("Converts an amount of a currency to another currency")
         .version("0.0.1")
@@ -33,7 +33,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .get_matches();
 
-    let amount = matches.value_of("amount").map(Amount::from_str).unwrap().unwrap();
+    let amount = matches.value_of("amount").map(str::parse::<f64>).unwrap().unwrap();
     let input = matches.value_of("input").map(Currency::from_str).unwrap().unwrap();
     let output = matches.values_of("output")
         .unwrap()
@@ -45,18 +45,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(())
     }
 
-    println!("Amount: {:?}, Input: {:?}, Output: {:?}", amount, input, output);
+    println!("Amount: {:.2?}, Input: {:?}, Output: {:?}", amount, input, output);
 
-    let provider = Provider::new(
-        String::from("exchangeratesapi"),
-        String::from("https://api.exchangeratesapi.io/latest")
-    );
+    let provider = ExchangeRatesApiProvider::new();
     let conversion_rate = provider.get_rate(input.symbol, output.symbol).await?;
     println!("Fetched conversion rate: {}", conversion_rate);
 
     let quote_amount = amount * conversion_rate;
 
-    println!("Result: {:?}", quote_amount);
+    println!("Result: {:.2?}", quote_amount);
     Ok(())
 
 }

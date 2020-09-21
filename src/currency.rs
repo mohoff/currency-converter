@@ -14,7 +14,7 @@ pub struct Currency {
 
 #[derive(Serialize,Deserialize,Clone,Eq,PartialEq,Hash,Debug)]
 pub enum Symbol {
-    EUR, USD, GBP
+    EUR, USD, GBP, ETH, BTC
 }
 
 impl fmt::Display for Symbol {
@@ -57,6 +57,18 @@ lazy_static! {
             name: String::from("Euro"),
             currency_type: CurrencyType::Fiat,
         };
+        let gbp = Currency {
+            symbol: Symbol::GBP,
+            sign: String::from("£"),
+            name: String::from("British Pounds"),
+            currency_type: CurrencyType::Fiat,
+        };
+        let eth = Currency {
+            symbol: Symbol::ETH,
+            sign: String::from("Ξ"),
+            name: String::from("Ether"),
+            currency_type: CurrencyType::Crypto,
+        };
 
         // FIXME: too many copies
         guesses.insert("usd", usd.clone());
@@ -65,9 +77,21 @@ lazy_static! {
         guesses.insert("eur", eur.clone());
         guesses.insert("euro", eur.clone());
         guesses.insert("€", eur.clone());
+        guesses.insert("gbp", eur.clone());
+        guesses.insert("pound", gbp.clone());
+        guesses.insert("pounds", gbp.clone());
+        guesses.insert("£", gbp.clone());
+        guesses.insert("eth", eth.clone());
+        guesses.insert("eths", eth.clone());
+        guesses.insert("ether", eth.clone());
+        guesses.insert("ethers", eth.clone());
+        guesses.insert("Ξ", eth.clone());
+        guesses.insert("ethereum", eth.clone());
 
         currencies.insert(usd);
         currencies.insert(eur);
+        currencies.insert(gbp);
+        currencies.insert(eth);
 
         Currencies {
             currencies,
@@ -83,8 +107,11 @@ impl FromStr for Currency {
     type Err = ParseCurrencyError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        CURRENCIES.guess(&s.to_lowercase()).ok_or(ParseCurrencyError(
-            format!("Could not parse {} into a currency", s)
-        )).map(|r| r.clone())
+        CURRENCIES
+            .guess(&s.to_lowercase())
+            .cloned()
+            .ok_or_else(||
+                ParseCurrencyError(format!("Could not parse {} into a currency", s))
+            )
     }
 }
