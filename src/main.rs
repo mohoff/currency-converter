@@ -1,14 +1,13 @@
 mod amount;
 mod currency;
-mod http;
 mod providers;
 
 use std::str::FromStr;
 
 use clap::{App,Arg};
 use amount::Amount;
+use providers::exchangeratesapi::{Provider,ProviderT};
 use currency::Currency;
-use http::get_quote;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -34,7 +33,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .get_matches();
 
-    let amount = matches.value_of("amount").map(Amount::from_str).unwrap();
+    let amount = matches.value_of("amount").map(Amount::from_str).unwrap().unwrap();
     let input = matches.value_of("input").map(Currency::from_str).unwrap().unwrap();
     let output = matches.values_of("output")
         .unwrap()
@@ -48,6 +47,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Amount: {:?}, Input: {:?}, Output: {:?}", amount, input, output);
 
-    get_quote(&input.code, &output.code).await
+    let provider = Provider::new(
+        String::from("exchangeratesapi"),
+        String::from("https://api.exchangeratesapi.io/latest")
+    );
+    let conversion_rate = provider.get_rate(input.symbol, output.symbol).await?;
+    println!("Fetched conversion rate: {}", conversion_rate);
+
+    let quote_amount = amount * conversion_rate;
+
+    println!("Result: {:?}", quote_amount);
+    Ok(())
 
 }

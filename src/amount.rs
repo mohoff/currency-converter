@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use std::ops::Mul;
 
 #[derive(Debug)]
 pub struct Amount { // TODO: use big int
@@ -51,5 +52,34 @@ impl FromStr for Amount {
         };
 
         Ok(Amount { cents: parsed })
+    }
+}
+
+impl Mul for Amount {
+    type Output = Self;
+
+    fn mul(self, other: Self) -> Self {
+        Amount {
+            cents: self.cents * other.cents
+        }
+    }
+}
+
+// FIXME: Not accurate
+impl Mul<f64> for Amount {
+    type Output = Amount;
+    fn mul(self, float: f64) -> Amount {
+        Amount {
+            cents: self.cents * ((float * 100.0) as usize) / 100
+        }
+    }
+}
+
+impl Mul<Amount> for f64 {
+    type Output = Amount;
+    fn mul(self, a: Amount) -> Amount {
+        Amount {
+            cents: a.cents * ((self * 100.0) as usize) / 100
+        }
     }
 }

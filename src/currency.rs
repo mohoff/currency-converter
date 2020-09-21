@@ -1,13 +1,26 @@
 use std::collections::{HashMap,HashSet};
+use std::fmt;
 use lazy_static::lazy_static;
 use std::str::FromStr;
+use serde::{Deserialize,Serialize};
 
 #[derive(Clone,Debug,Eq,PartialEq,Hash)]
 pub struct Currency {
-    pub code: String,
-    symbol: String,
+    pub symbol: Symbol,
+    sign: String,
     name: String,
     currency_type: CurrencyType,
+}
+
+#[derive(Serialize,Deserialize,Clone,Eq,PartialEq,Hash,Debug)]
+pub enum Symbol {
+    EUR, USD, GBP
+}
+
+impl fmt::Display for Symbol {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 #[derive(Clone,Debug,Copy,Eq,PartialEq,Hash)]
@@ -33,14 +46,14 @@ lazy_static! {
         let mut guesses = HashMap::<&'static str, Currency>::new();
 
         let usd = Currency {
-            code: String::from("USD"),
-            symbol: String::from("$"),
+            symbol: Symbol::USD,
+            sign: String::from("$"),
             name: String::from("US Dollar"),
             currency_type: CurrencyType::Fiat,
         };
         let eur = Currency {
-            code: String::from("EUR"),
-            symbol: String::from("eur"),
+            symbol: Symbol::EUR,
+            sign: String::from("€"),
             name: String::from("Euro"),
             currency_type: CurrencyType::Fiat,
         };
