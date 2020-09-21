@@ -2,6 +2,7 @@ use std::collections::{HashMap,HashSet};
 use std::fmt;
 use lazy_static::lazy_static;
 use std::str::FromStr;
+use std::rc::Rc;
 use serde::{Deserialize,Serialize};
 
 #[derive(Clone,Debug,Eq,PartialEq,Hash)]
@@ -30,47 +31,46 @@ pub enum CurrencyType {
 }
 
 pub struct Currencies {
-    pub currencies: HashSet<Currency>,
-    guesses: HashMap<&'static str, Currency>,
+    pub currencies: HashSet<Rc<Currency>>,
+    guesses: HashMap<&'static str, Rc<Currency>>,
 }
 
 impl Currencies {
     pub fn guess(&self, guess: &str) -> Option<&Currency> {
-        self.guesses.get(guess) //.map(|c| *c)
+        (self.guesses.get(guess)).map(|o| &**o)
     }
 }
 
 lazy_static! {
     static ref CURRENCIES: Currencies = {
-        let mut currencies = HashSet::<Currency>::new();
-        let mut guesses = HashMap::<&'static str, Currency>::new();
+        let mut currencies = HashSet::<Rc<Currency>>::new();
+        let mut guesses = HashMap::<&'static str, Rc<Currency>>::new();
 
-        let usd = Currency {
+        let usd = Rc::new(Currency {
             symbol: Symbol::USD,
             sign: String::from("$"),
             name: String::from("US Dollar"),
             currency_type: CurrencyType::Fiat,
-        };
-        let eur = Currency {
+        });
+        let eur = Rc::new(Currency {
             symbol: Symbol::EUR,
             sign: String::from("€"),
             name: String::from("Euro"),
             currency_type: CurrencyType::Fiat,
-        };
-        let gbp = Currency {
+        });
+        let gbp = Rc::new(Currency {
             symbol: Symbol::GBP,
             sign: String::from("£"),
             name: String::from("British Pounds"),
             currency_type: CurrencyType::Fiat,
-        };
-        let eth = Currency {
+        });
+        let eth = Rc::new(Currency {
             symbol: Symbol::ETH,
             sign: String::from("Ξ"),
             name: String::from("Ether"),
             currency_type: CurrencyType::Crypto,
-        };
+        });
 
-        // FIXME: too many copies
         guesses.insert("usd", usd.clone());
         guesses.insert("usdollar", usd.clone());
         guesses.insert("$", usd.clone());
