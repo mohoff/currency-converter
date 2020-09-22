@@ -2,7 +2,7 @@ use std::collections::{HashMap,HashSet};
 use std::fmt;
 use lazy_static::lazy_static;
 use std::str::FromStr;
-use std::rc::Rc;
+use std::sync::Arc;
 use serde::{Deserialize,Serialize};
 
 #[derive(Clone,Debug,Eq,PartialEq,Hash)]
@@ -31,8 +31,8 @@ pub enum CurrencyType {
 }
 
 pub struct Currencies {
-    pub currencies: HashSet<Rc<Currency>>,
-    guesses: HashMap<&'static str, Rc<Currency>>,
+    pub currencies: HashSet<Arc<Currency>>,
+    guesses: HashMap<&'static str, Arc<Currency>>,
 }
 
 impl Currencies {
@@ -43,28 +43,28 @@ impl Currencies {
 
 lazy_static! {
     static ref CURRENCIES: Currencies = {
-        let mut currencies = HashSet::<Rc<Currency>>::new();
-        let mut guesses = HashMap::<&'static str, Rc<Currency>>::new();
+        let mut currencies = HashSet::<Arc<Currency>>::new();
+        let mut guesses = HashMap::<&'static str, Arc<Currency>>::new();
 
-        let usd = Rc::new(Currency {
+        let usd = Arc::new(Currency {
             symbol: Symbol::USD,
             sign: String::from("$"),
             name: String::from("US Dollar"),
             currency_type: CurrencyType::Fiat,
         });
-        let eur = Rc::new(Currency {
+        let eur = Arc::new(Currency {
             symbol: Symbol::EUR,
             sign: String::from("€"),
             name: String::from("Euro"),
             currency_type: CurrencyType::Fiat,
         });
-        let gbp = Rc::new(Currency {
+        let gbp = Arc::new(Currency {
             symbol: Symbol::GBP,
             sign: String::from("£"),
             name: String::from("British Pounds"),
             currency_type: CurrencyType::Fiat,
         });
-        let eth = Rc::new(Currency {
+        let eth = Arc::new(Currency {
             symbol: Symbol::ETH,
             sign: String::from("Ξ"),
             name: String::from("Ether"),

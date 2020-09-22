@@ -11,7 +11,6 @@ pub struct BaseProvider {
 
 #[async_trait]
 pub(crate) trait Provider {
-    fn new() -> Self;
     fn build_url(&self, base: &Symbol, quote: &Symbol) -> Result<Url, anyhow::Error>;
     async fn get_rate(&self, base: Symbol, quote: Symbol) -> Result<f64, anyhow::Error>;
 }

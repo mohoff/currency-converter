@@ -1,13 +1,18 @@
 mod cli;
 mod currency;
 mod providers;
+mod utils;
 
 use std::str::FromStr;
 
+use anyhow::{Context};
+
 use providers::exchangeratesapi::ExchangeRatesApiProvider;
+use providers::fixer::FixerProvider;
 use providers::provider::{Provider};
 use currency::Currency;
 use cli::build_cli;
+use utils::{Mean};
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
@@ -27,11 +32,23 @@ async fn main() -> Result<(), anyhow::Error> {
 
     println!("Amount: {:.2?}, Input: {:?}, Output: {:?}", amount, input, output);
 
-    let provider = ExchangeRatesApiProvider::new();
-    let conversion_rate = provider.get_rate(input.symbol, output.symbol).await?;
-    println!("Fetched conversion rate: {}", conversion_rate);
+    let mut providers : Vec<Box<dyn Provider>> = vec!(Box::new(ExchangeRatesApiProvider::new()));
 
-    let quote_amount = amount * conversion_rate;
+    if let Some(access_key) = matches.value_of("access_key_fixer") {
+        providers.push(Box::new(FixerProvider::new(access_key.to_string())));
+    }
+
+    let mut rates = vec![];
+    for p in providers {
+        let r = p.get_rate(input.symbol.clone(), output.symbol.clone()).await?;
+        rates.push(r);
+    }
+
+    println!("Fetched conversion rate: {:?}", rates);
+    let avg_rate = (&rates[..]).mean();
+    println!("Average rate: {:?}", avg_rate);
+
+    let quote_amount = amount * avg_rate;
 
     println!("Result: {:.2?}", quote_amount);
     Ok(())

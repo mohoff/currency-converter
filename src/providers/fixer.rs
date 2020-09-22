@@ -7,21 +7,26 @@ use crate::currency::Symbol;
 use crate::providers::provider::{BaseProvider,Provider};
 use std::collections::HashMap;
 
-pub struct ExchangeRatesApiProvider(BaseProvider);
+pub struct FixerProvider {
+    provider: BaseProvider,
+    access_key: String,
+}
 
 #[derive(Serialize,Deserialize)]
 struct Response {
     rates: HashMap<Symbol, f64>,
     base: Symbol,
-    date: String
+    date: String,
+    timestamp: usize,
+    success: bool,
 }
 
 #[async_trait]
-impl Provider for ExchangeRatesApiProvider {
+impl Provider for FixerProvider {
     fn build_url(&self, base: &Symbol, quote: &Symbol) -> Result<Url, anyhow::Error> {
         Url::parse_with_params(
-            &self.0.base_url,
-            &[("base", base.to_string()), ("symbols", quote.to_string())]
+            &self.provider.base_url,
+            &[("access_key", self.access_key.clone()), ("base", base.to_string()), ("symbols", quote.to_string())]
         ).context("Failed to build URL")
     }
     async fn get_rate(&self, base: Symbol, quote: Symbol) -> Result<f64, anyhow::Error> {
@@ -32,6 +37,8 @@ impl Provider for ExchangeRatesApiProvider {
             .await?
             .text()
             .await?;
+
+        dbg!(&resp);
 
         let parsed_rate = serde_json::from_str::<Response>(&resp)
             .context("Failed to parse API response")?
@@ -44,11 +51,14 @@ impl Provider for ExchangeRatesApiProvider {
     }
 }
 
-impl ExchangeRatesApiProvider {
-    pub fn new() -> Self {
-        Self(BaseProvider {
-            name: String::from("exchangeratesapi"),
-            base_url: String::from("https://api.exchangeratesapi.io/latest"),
-        })
+impl FixerProvider {
+    pub fn new(access_key: String) -> Self {
+        Self {
+            provider: BaseProvider {
+                name: String::from("fixer.io"),
+                base_url: String::from("http://data.fixer.io/api/latest"), // FIXME: favor provider that supports https in free plan
+            },
+            access_key,
+        }
     }
 }

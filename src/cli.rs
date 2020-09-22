@@ -21,4 +21,10 @@ pub fn build_cli() -> App<'static> {
                 .index(3)
                 .multiple(true)
         )
+        .arg(
+            Arg::new("access_key_fixer")
+                .about("Enables the Fixer.io API")
+                .takes_value(true)
+                .long("--access-key-fixer"),
+        )
 }
