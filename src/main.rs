@@ -5,7 +5,7 @@ mod utils;
 
 use std::str::FromStr;
 
-use anyhow::{Context};
+use futures::stream::{self, StreamExt};
 
 use providers::exchangeratesapi::ExchangeRatesApiProvider;
 use providers::fixer::FixerProvider;
@@ -34,15 +34,22 @@ async fn main() -> Result<(), anyhow::Error> {
 
     let mut providers : Vec<Box<dyn Provider>> = vec!(Box::new(ExchangeRatesApiProvider::new()));
 
-    if let Some(access_key) = matches.value_of("access_key_fixer") {
+    if let Some(access_key) = matches.value_of("access-key-fixer") {
         providers.push(Box::new(FixerProvider::new(access_key.to_string())));
     }
 
-    let mut rates = vec![];
-    for p in providers {
-        let r = p.get_rate(input.symbol.clone(), output.symbol.clone()).await?;
-        rates.push(r);
-    }
+    let rates = stream::iter(&providers)
+        .map(|p| p.get_rate(input.symbol.clone(), output.symbol.clone()))
+        .buffered(providers.len())
+        .map(|r| r.unwrap())
+        .collect::<Vec<_>>().await;
+
+    // // Blocking version
+    // let mut rates = vec![];
+    // for p in providers {
+    //     let r = p.get_rate(input.symbol.clone(), output.symbol.clone()).await?;
+    //     rates.push(r);
+    // }
 
     println!("Fetched conversion rate: {:?}", rates);
     let avg_rate = (&rates[..]).mean();
@@ -50,7 +57,11 @@ async fn main() -> Result<(), anyhow::Error> {
 
     let quote_amount = amount * avg_rate;
 
-    println!("Result: {:.2?}", quote_amount);
-    Ok(())
+    if matches.is_present("precise") {
+        println!("Result: {:?}", quote_amount);
+    } else {
+        println!("Result: {:.2?}", quote_amount);
+    }
 
+    Ok(())
 }

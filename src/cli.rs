@@ -12,17 +12,23 @@ pub fn build_cli() -> App<'static> {
         )
         .arg(
             Arg::with_name("input")
-                .about("input currency, e.g. USD, Euro")
+                .about("Input currency (base), e.g. USD, Euro")
                 .index(2),
         )
         .arg(
             Arg::with_name("output")
-                .about("output currency, e.g. USD, Euro")
+                .about("Output currency (quote), e.g. USD, Euro")
                 .index(3)
                 .multiple(true)
         )
         .arg(
-            Arg::new("access_key_fixer")
+            Arg::with_name("precise")
+                .about("Show sub-cent decimals")
+                .short('p')
+                .long("--precise"),
+        )
+        .arg(
+            Arg::new("access-key-fixer")
                 .about("Enables the Fixer.io API")
                 .takes_value(true)
                 .long("--access-key-fixer"),
