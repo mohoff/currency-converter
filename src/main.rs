@@ -6,6 +6,7 @@ mod utils;
 use std::str::FromStr;
 
 use futures::stream::{self, StreamExt};
+use rust_decimal::Decimal;
 
 use providers::exchangeratesapi::ExchangeRatesApiProvider;
 use providers::fixer::FixerProvider;
@@ -18,7 +19,7 @@ use utils::{Mean};
 async fn main() -> Result<(), anyhow::Error> {
     let matches = build_cli().get_matches();
 
-    let amount = matches.value_of("amount").map(str::parse::<f64>).unwrap().unwrap();
+    let amount = matches.value_of("amount").map(Decimal::from_str).unwrap().unwrap();
     let input = matches.value_of("input").map(Currency::from_str).unwrap().unwrap();
     let output = matches.values_of("output")
         .unwrap()
@@ -57,11 +58,12 @@ async fn main() -> Result<(), anyhow::Error> {
 
     let quote_amount = amount * avg_rate;
 
-    if matches.is_present("precise") {
-        println!("Result: {:?}", quote_amount);
-    } else {
-        println!("Result: {:.2?}", quote_amount);
-    }
+    let result = match matches.is_present("precise") {
+        true => quote_amount.round_dp(10),
+        _ => quote_amount.round_dp(2).normalize(),
+    };
+
+    println!("{}", result);
 
     Ok(())
 }

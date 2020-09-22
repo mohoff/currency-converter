@@ -2,6 +2,7 @@ use anyhow::{Context};
 use serde::{Deserialize,Serialize};
 use reqwest::Url;
 use async_trait::async_trait;
+use rust_decimal::Decimal;
 
 use crate::currency::Symbol;
 use crate::providers::provider::{BaseProvider,Provider};
@@ -14,7 +15,7 @@ pub struct FixerProvider {
 
 #[derive(Serialize,Deserialize)]
 struct Response {
-    rates: HashMap<Symbol, f64>,
+    rates: HashMap<Symbol, Decimal>,
     base: Symbol,
     date: String,
     timestamp: usize,
@@ -29,7 +30,7 @@ impl Provider for FixerProvider {
             &[("access_key", self.access_key.clone()), ("base", base.to_string()), ("symbols", quote.to_string())]
         ).context("Failed to build URL")
     }
-    async fn get_rate(&self, base: Symbol, quote: Symbol) -> Result<f64, anyhow::Error> {
+    async fn get_rate(&self, base: Symbol, quote: Symbol) -> Result<Decimal, anyhow::Error> {
         let url = self.build_url(&base, &quote)?;
         let client = reqwest::Client::new();
         let resp = client.get(url)
@@ -37,8 +38,6 @@ impl Provider for FixerProvider {
             .await?
             .text()
             .await?;
-
-        dbg!(&resp);
 
         let parsed_rate = serde_json::from_str::<Response>(&resp)
             .context("Failed to parse API response")?

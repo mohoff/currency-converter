@@ -2,6 +2,7 @@ use anyhow::{Context};
 use serde::{Deserialize,Serialize};
 use reqwest::Url;
 use async_trait::async_trait;
+use rust_decimal::Decimal;
 
 use crate::currency::Symbol;
 use crate::providers::provider::{BaseProvider,Provider};
@@ -11,7 +12,7 @@ pub struct ExchangeRatesApiProvider(BaseProvider);
 
 #[derive(Serialize,Deserialize)]
 struct Response {
-    rates: HashMap<Symbol, f64>,
+    rates: HashMap<Symbol, Decimal>,
     base: Symbol,
     date: String
 }
@@ -24,7 +25,7 @@ impl Provider for ExchangeRatesApiProvider {
             &[("base", base.to_string()), ("symbols", quote.to_string())]
         ).context("Failed to build URL")
     }
-    async fn get_rate(&self, base: Symbol, quote: Symbol) -> Result<f64, anyhow::Error> {
+    async fn get_rate(&self, base: Symbol, quote: Symbol) -> Result<Decimal, anyhow::Error> {
         let url = self.build_url(&base, &quote)?;
         let client = reqwest::Client::new();
         let resp = client.get(url)

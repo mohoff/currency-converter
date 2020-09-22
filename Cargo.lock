@@ -134,6 +134,7 @@ dependencies = [
  "futures",
  "lazy_static",
  "reqwest",
+ "rust_decimal",
  "serde",
  "serde_json",
  "tokio",
@@ -614,6 +615,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "num-traits"
+version = "0.2.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac267bcc07f48ee5f8935ab0d24f316fb722d7a1292e2913f0cc196b29ffd611"
+dependencies = [
+ "autocfg",
+]
+
+[[package]]
 name = "num_cpus"
 version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -864,6 +874,16 @@ dependencies = [
  "wasm-bindgen-futures",
  "web-sys",
  "winreg",
+]
+
+[[package]]
+name = "rust_decimal"
+version = "1.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c9e81662973c7a8d9663e64a0de4cd642b89a21d64966e3d99606efdc5fb0cc6"
+dependencies = [
+ "num-traits",
+ "serde",
 ]
 
 [[package]]
