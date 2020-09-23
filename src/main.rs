@@ -6,6 +6,7 @@ mod utils;
 use std::str::FromStr;
 
 use futures::stream::{self, StreamExt};
+use futures::future::{join_all,Future};
 use rust_decimal::Decimal;
 
 use providers::exchangeratesapi::ExchangeRatesApiProvider;
@@ -39,11 +40,22 @@ async fn main() -> Result<(), anyhow::Error> {
         providers.push(Box::new(FixerProvider::new(access_key.to_string())));
     }
 
-    let rates = stream::iter(&providers)
+    // let futures = stream::iter(&providers)
+    //     .map(|p| p.get_rate(input.symbol.clone(), output.symbol.clone()))
+    //     .collect();
+    let futures = providers.iter()
         .map(|p| p.get_rate(input.symbol.clone(), output.symbol.clone()))
-        .buffered(providers.len())
+        .collect::<Vec<_>>();
+
+    let rates = join_all(futures)
+        .await
+        .into_iter()
         .map(|r| r.unwrap())
-        .collect::<Vec<_>>().await;
+        .collect::<Vec<_>>();
+
+
+        // .map(|r| r.unwrap())
+        // .collect::<Vec<_>>().await;
 
     // // Blocking version
     // let mut rates = vec![];
