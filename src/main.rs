@@ -2,11 +2,12 @@ mod cli;
 mod currency;
 mod providers;
 mod utils;
+mod join_all_progress;
 
 use std::str::FromStr;
 
-use futures::stream::{self, StreamExt};
-use futures::future::{join_all,Future};
+use anyhow::*;
+use colored::*;
 use rust_decimal::Decimal;
 
 use providers::exchangeratesapi::ExchangeRatesApiProvider;
@@ -14,7 +15,8 @@ use providers::fixer::FixerProvider;
 use providers::provider::{Provider};
 use currency::Currency;
 use cli::build_cli;
-use utils::{Mean};
+use utils::Stats;
+use join_all_progress::join_all_progress;
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
@@ -32,30 +34,21 @@ async fn main() -> Result<(), anyhow::Error> {
         return Ok(())
     }
 
-    println!("Amount: {:.2?}, Input: {:?}, Output: {:?}", amount, input, output);
-
     let mut providers : Vec<Box<dyn Provider>> = vec!(Box::new(ExchangeRatesApiProvider::new()));
 
     if let Some(access_key) = matches.value_of("access-key-fixer") {
         providers.push(Box::new(FixerProvider::new(access_key.to_string())));
     }
 
-    // let futures = stream::iter(&providers)
-    //     .map(|p| p.get_rate(input.symbol.clone(), output.symbol.clone()))
-    //     .collect();
     let futures = providers.iter()
         .map(|p| p.get_rate(input.symbol.clone(), output.symbol.clone()))
         .collect::<Vec<_>>();
 
-    let rates = join_all(futures)
+    let rates = join_all_progress(futures)
         .await
         .into_iter()
-        .map(|r| r.unwrap())
+        .filter_map(Result::ok)
         .collect::<Vec<_>>();
-
-
-        // .map(|r| r.unwrap())
-        // .collect::<Vec<_>>().await;
 
     // // Blocking version
     // let mut rates = vec![];
@@ -64,18 +57,28 @@ async fn main() -> Result<(), anyhow::Error> {
     //     rates.push(r);
     // }
 
-    println!("Fetched conversion rate: {:?}", rates);
-    let avg_rate = (&rates[..]).mean();
-    println!("Average rate: {:?}", avg_rate);
-
+    let avg_rate = (&rates[..]).mean()
+        .context("No data to compute mean")?;
     let quote_amount = amount * avg_rate;
 
     let result = match matches.is_present("precise") {
         true => quote_amount.round_dp(10),
         _ => quote_amount.round_dp(2).normalize(),
     };
-
     println!("{}", result);
+
+    if matches.is_present("stats") {
+        let std_deviation = (&rates[..]).std_deviation()
+            .map(|e| e.to_string().normal())
+            .unwrap_or_else(|| "<cannot compute>".italic());
+
+        vec![
+            format!("Successfully fetched {}/{} sources", rates.len(), providers.len()),
+            format!("Fetched rates: {:?}, σ: {}", rates, std_deviation)
+        ]
+        .iter()
+        .for_each(|l| println!("{}", l.dimmed()));
+    };
 
     Ok(())
 }

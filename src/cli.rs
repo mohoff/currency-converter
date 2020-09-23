@@ -28,6 +28,12 @@ pub fn build_cli() -> App<'static> {
                 .long("--precise"),
         )
         .arg(
+            Arg::with_name("stats")
+                .about("Show conversion statistics")
+                .short('s')
+                .long("--stats"),
+        )
+        .arg(
             Arg::new("access-key-fixer")
                 .about("Enables the Fixer.io API")
                 .takes_value(true)
