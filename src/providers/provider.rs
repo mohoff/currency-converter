@@ -13,5 +13,6 @@ pub struct BaseProvider {
 #[async_trait]
 pub(crate) trait Provider {
     fn build_url(&self, base: &Symbol, quote: &Symbol) -> Result<Url, anyhow::Error>;
+    fn parse_rate_from_response(&self, quote: &Symbol, response: &str) -> Result<Decimal, anyhow::Error>;
     async fn get_rate(&self, base: Symbol, quote: Symbol) -> Result<Decimal, anyhow::Error>;
 }

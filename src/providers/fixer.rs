@@ -39,14 +39,17 @@ impl Provider for FixerProvider {
             .text()
             .await?;
 
-        let parsed_rate = serde_json::from_str::<Response>(&resp)
-            .context("Failed to parse API response")?
-            .rates
-            .get(&quote)
-            .cloned()
-            .context("Failed to find quote symbol in parsed API response")?;
+        let parsed_rate = FixerProvider::parse_rate_from_response(&self, &quote, &resp)?;
 
         Ok(parsed_rate)
+    }
+    fn parse_rate_from_response(&self, quote: &Symbol, response: &str) -> Result<Decimal, anyhow::Error> {
+        serde_json::from_str::<Response>(response)
+            .context("Failed to parse API response")?
+            .rates
+            .get(quote)
+            .cloned()
+            .context("Failed to find quote symbol in parsed API response")
     }
 }
 
@@ -59,5 +62,61 @@ impl FixerProvider {
             },
             access_key,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::FixerProvider;
+    use crate::providers::provider::Provider;
+    use crate::currency::Symbol;
+
+    use rust_decimal::Decimal;
+
+    #[test]
+    fn parses_response_correctly() {
+        let quote = Symbol::USD;
+        let expected_rate = Decimal::new(111, 4);
+        let response = format!(r#"
+            {{
+                "rates": {{
+                    "USD": "{}"
+                }},
+                "base": "EUR",
+                "date": "2020-09-23",
+                "timestamp": 1600865231,
+                "success": true
+            }}
+        "#, expected_rate);
+        let provider = FixerProvider::new(String::from("some-access-key"));
+
+        // Note: Converting to Option to get rid of E in Result<T,E>. Otherwise,
+        // the assertion fails as anyhow::Error does not implement Eq.
+        let rate = provider.parse_rate_from_response(&quote, &response).ok();
+
+        assert_eq!(rate, Some(expected_rate), "Parsed rate should match");
+    }
+
+    #[test]
+    fn fails_parsing_invalid_response() {
+        let quote = Symbol::USD;
+        let response = r#"
+            {{
+                "rates": {{
+                    "EUR": "0.111"
+                }},
+                "base": "EUR",
+                "date": "2020-09-23",
+                "timestamp": 1600865231,
+                "success": true
+            }}
+        "#;
+        let provider = FixerProvider::new(String::from("some-access-key"));
+
+        // Note: Converting to Option to get rid of E in Result<T,E>. Otherwise,
+        // the assertion fails as anyhow::Error does not implement Eq.
+        let rate = provider.parse_rate_from_response(&quote, &response);
+
+        assert!(rate.is_err(), "Parsing invalid response should fail");
     }
 }

@@ -115,3 +115,28 @@ impl FromStr for Currency {
             )
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::Currency;
+    use std::str::FromStr;
+
+    #[test]
+    fn parses_currency_from_str() {
+        let input = "usd";
+
+        let currency = Currency::from_str(input);
+
+        assert!(currency.is_ok(), "Currency {} should be parsed correctly", input);
+    }
+
+    #[test]
+    fn fails_parsing_invalid_currency_from_str() {
+        let input = "usdd";
+
+        let invalid_currency = Currency::from_str(input);
+
+        assert!(invalid_currency.is_err(), "Invalid Currency {} should fail to parse", input);
+    }
+}
