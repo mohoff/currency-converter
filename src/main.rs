@@ -49,11 +49,14 @@ async fn main() -> Result<(), anyhow::Error> {
         .collect::<Vec<_>>();
 
     // NOTE: must preserve order so we can associate future output with provider name
-    let rate_results = join_all_progress(futures)
+    let rate_results : Vec<Option<Decimal>> = join_all_progress(futures)
         .await
-        .into_iter();
-    let rates = rate_results.copied()
-        .filter_map(Result::ok)
+        .into_iter()
+        .map(|r| r.ok())
+        .collect::<Vec<_>>();
+    let rates : Vec<Decimal> = rate_results.iter()
+        .cloned()
+        .filter_map(|o| o)
         .collect::<Vec<_>>();
 
     // // Blocking version
@@ -83,15 +86,19 @@ async fn main() -> Result<(), anyhow::Error> {
             .unwrap_or_else(|| "<cannot compute>".italic());
         let provider_statuses = providers.iter()
             .zip(rate_results)
-            .map(|(p,r)| if r.is_ok() { p.get_name().green() } else { p.get_name().dimmed() })
-            .collect::<Vec<_>>();
+            .map(|(p,r)| if r.is_some() { p.get_name().green() } else { p.get_name().dimmed() })
+            .fold(String::from(""), |mut acc, x| { // Joins Vec<ColoredString>
+                acc.push_str(&x.to_string());
+                acc.push(' ');
+                acc
+            });
 
         vec![
-            format!("Successfully fetched {}/{} sources", rates.len(), providers.len()),
+            format!("Successfully fetched {}/{} sources: {}", rates.len(), providers.len(), provider_statuses),
             format!("Fetched rates: {:?}, σ: {}", rates, std_deviation)
         ]
         .iter()
-        .for_each(|l| println!("{}", l.dimmed()));
+        .for_each(|l| println!("{}", l));
     };
 
     Ok(())

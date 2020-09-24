@@ -19,6 +19,9 @@ struct Response {
 
 #[async_trait]
 impl Provider for ExchangeRatesApiProvider {
+    fn get_name(&self) -> String {
+        self.0.name.clone()
+    }
     fn build_url(&self, base: &Symbol, quote: &Symbol) -> Result<Url, anyhow::Error> {
         Url::parse_with_params(
             &self.0.base_url,

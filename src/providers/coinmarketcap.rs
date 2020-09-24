@@ -36,6 +36,9 @@ struct Quote {
 
 #[async_trait]
 impl Provider for CoinMarketCapProvider {
+    fn get_name(&self) -> String {
+        self.provider.name.clone()
+    }
     fn build_url(&self, base: &Symbol, quote: &Symbol) -> Result<Url, anyhow::Error> {
         Url::parse_with_params(
             &self.provider.base_url,
