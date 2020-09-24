@@ -41,6 +41,8 @@ impl Currencies {
     }
 }
 
+// IMPROVE: No need for laziness. A `const` HashMap seems best so phf crate would be ideal.
+// However, phf only supports maps and sets and currently does not support structs as `Currenices`.
 lazy_static! {
     static ref CURRENCIES: Currencies = {
         let mut currencies = HashSet::<Arc<Currency>>::new();
