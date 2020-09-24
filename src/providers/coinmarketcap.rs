@@ -78,3 +78,87 @@ impl CoinMarketCapProvider {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::CoinMarketCapProvider;
+    use crate::providers::provider::Provider;
+    use crate::currency::Symbol;
+
+    use rust_decimal::Decimal;
+
+    #[test]
+    fn parses_response_correctly() {
+        let quote = Symbol::USD;
+        let expected_rate = Decimal::new(111, 4);
+        let response = format!(r#"
+            {{
+                "status": {{
+                    "timestamp": "2020-09-24T16:03:43.658Z",
+                    "error_code": 0,
+                    "error_message": null,
+                    "elapsed": 17,
+                    "credit_count": 1,
+                    "notic": null
+                }},
+                "data": {{
+                    "id": 1027,
+                    "symbol": "ETH",
+                    "name": "Ethereum",
+                    "amount": 1,
+                    "last_updated": "2020-09-24T16:02:28.000Z",
+                    "quote": {{
+                        "USD": {{
+                            "price": {},
+                            "last_updated": "2020-09-24T16:02:28.000Z"
+                        }}
+                    }}
+                }}
+            }}
+        "#, expected_rate);
+        let provider = CoinMarketCapProvider::new(String::from("some-access-key"));
+
+        // Note: Converting to Option to get rid of E in Result<T,E>. Otherwise,
+        // the assertion fails as anyhow::Error does not implement Eq.
+        let rate = provider.parse_rate_from_response(&quote, &response).ok();
+
+        assert_eq!(rate, Some(expected_rate), "Parsed rate should match");
+    }
+
+    #[test]
+    fn fails_parsing_invalid_response() {
+        let quote = Symbol::USD;
+        let response = r#"
+            {{
+                "status": {{
+                    "timestamp": "2020-09-24T16:03:43.658Z",
+                    "error_code": 0,
+                    "error_message": null,
+                    "elapsed": 17,
+                    "credit_count": 1,
+                    "notic": null
+                }},
+                "data": {{
+                    "id": 1027,
+                    "symbol": "ETH",
+                    "name": "Ethereum",
+                    "amount": 1,
+                    "last_updated": "2020-09-24T16:02:28.000Z",
+                    "quote": {{
+                        "USDDDDDDDDDDDD": {{
+                            "price": 123.123,
+                            "last_updated": "2020-09-24T16:02:28.000Z"
+                        }}
+                    }}
+                }}
+            }}
+        "#;
+        let provider = CoinMarketCapProvider::new(String::from("some-access-key"));
+
+        // Note: Converting to Option to get rid of E in Result<T,E>. Otherwise,
+        // the assertion fails as anyhow::Error does not implement Eq.
+        let rate = provider.parse_rate_from_response(&quote, &response);
+
+        assert!(rate.is_err(), "Parsing invalid response should fail");
+    }
+}

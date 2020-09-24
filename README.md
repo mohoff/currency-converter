@@ -1,4 +1,4 @@
-# `currency-converter`
+# `cuco` - convert currencies on the command line
 
 
 ## Development
