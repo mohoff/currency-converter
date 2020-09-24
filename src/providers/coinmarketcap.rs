@@ -71,7 +71,7 @@ impl CoinMarketCapProvider {
     pub fn new(access_key: String) -> Self {
         Self {
             provider: BaseProvider {
-                name: String::from("coinmarketcap"),
+                name: String::from("coinmarketcap.com"),
                 base_url: String::from("https://pro-api.coinmarketcap.com/v1/tools/price-conversion"),
             },
             access_key,

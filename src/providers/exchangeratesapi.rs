@@ -51,7 +51,7 @@ impl Provider for ExchangeRatesApiProvider {
 impl ExchangeRatesApiProvider {
     pub fn new() -> Self {
         Self(BaseProvider {
-            name: String::from("exchangeratesapi"),
+            name: String::from("exchangeratesapi.io"),
             base_url: String::from("https://api.exchangeratesapi.io/latest"),
         })
     }
