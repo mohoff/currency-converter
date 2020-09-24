@@ -48,9 +48,11 @@ async fn main() -> Result<(), anyhow::Error> {
         .map(|p| p.get_rate(input.symbol.clone(), output.symbol.clone()))
         .collect::<Vec<_>>();
 
-    let rates = join_all_progress(futures)
+    // NOTE: must preserve order so we can associate future output with provider name
+    let rate_results = join_all_progress(futures)
         .await
-        .into_iter()
+        .into_iter();
+    let rates = rate_results.copied()
         .filter_map(Result::ok)
         .collect::<Vec<_>>();
 
@@ -79,6 +81,10 @@ async fn main() -> Result<(), anyhow::Error> {
         let std_deviation = (&rates[..]).std_deviation()
             .map(|e| e.to_string().normal())
             .unwrap_or_else(|| "<cannot compute>".italic());
+        let provider_statuses = providers.iter()
+            .zip(rate_results)
+            .map(|(p,r)| if r.is_ok() { p.get_name().green() } else { p.get_name().dimmed() })
+            .collect::<Vec<_>>();
 
         vec![
             format!("Successfully fetched {}/{} sources", rates.len(), providers.len()),
