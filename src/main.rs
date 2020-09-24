@@ -10,6 +10,7 @@ use anyhow::*;
 use colored::*;
 use rust_decimal::Decimal;
 
+use providers::coinmarketcap::CoinMarketCapProvider;
 use providers::exchangeratesapi::ExchangeRatesApiProvider;
 use providers::fixer::FixerProvider;
 use providers::provider::{Provider};
@@ -38,6 +39,9 @@ async fn main() -> Result<(), anyhow::Error> {
 
     if let Some(access_key) = matches.value_of("access-key-fixer") {
         providers.push(Box::new(FixerProvider::new(access_key.to_string())));
+    }
+    if let Some(access_key) = matches.value_of("access-key-coinmarketcap") {
+        providers.push(Box::new(CoinMarketCapProvider::new(access_key.to_string())));
     }
 
     let futures = providers.iter()

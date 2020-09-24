@@ -40,9 +40,15 @@ pub fn build_cli() -> App<'static> {
                 .long("--stats"),
         )
         .arg(
-            Arg::new("access-key-fixer")
+            Arg::with_name("access-key-fixer")
                 .about("Enables the Fixer.io API")
                 .takes_value(true)
                 .long("--access-key-fixer"),
+        )
+        .arg(
+            Arg::with_name("access-key-coinmarketcap")
+                .about("Enables the CoinMarketCap API")
+                .takes_value(true)
+                .long("--access-key-coinmarketcap"),
         )
 }
