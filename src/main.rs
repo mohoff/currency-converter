@@ -62,10 +62,14 @@ async fn main() -> Result<(), anyhow::Error> {
     let quote_amount = amount * avg_rate;
 
     let result = match matches.is_present("precise") {
-        true => quote_amount.round_dp(10),
+        true => quote_amount.normalize(),
         _ => quote_amount.round_dp(2).normalize(),
     };
-    println!("{}", result);
+
+    match matches.is_present("raw") {
+        true => println!("{}", result),
+        _ => println!("{} {} ⟶  {} {}", amount, input.symbol.to_string().dimmed(), result, output.symbol.to_string().dimmed()),
+    }
 
     if matches.is_present("stats") {
         let std_deviation = (&rates[..]).std_deviation()

@@ -28,6 +28,12 @@ pub fn build_cli() -> App<'static> {
                 .long("--precise"),
         )
         .arg(
+            Arg::with_name("raw")
+                .about("Only print output currency value")
+                .short('r')
+                .long("--raw"),
+        )
+        .arg(
             Arg::with_name("stats")
                 .about("Show conversion statistics")
                 .short('s')
