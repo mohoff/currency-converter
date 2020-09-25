@@ -19,7 +19,7 @@ where
     stdout: Stdout,
 }
 
-// TODO: [`FuturesUnordered`][crate::stream::FuturesUnordered] APIs is more
+// IMPROVE: [`FuturesUnordered`][crate::stream::FuturesUnordered] APIs is more
 // powerful - it can poll only futures that have been woken. Investigate.
 pub fn join_all_progress<I>(i: I) -> JoinAllProgress<I::Item>
 where

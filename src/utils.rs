@@ -60,7 +60,7 @@ mod tests {
     }
 
     #[test]
-    fn fail_on_empty_data() {
+    fn mean_fails_on_empty_data() {
         let decimals = vec![];
 
         let average = decimals.as_slice().mean();
@@ -68,5 +68,21 @@ mod tests {
         assert!(average.is_none());
     }
 
-    // TODO: tests for standard deviation
+    #[test]
+    fn computes_std_deviation_of_decimals() {
+        let decimals = vec![Decimal::new(1, 0), Decimal::new(2, 0)];
+
+        let std_deviation = decimals.as_slice().std_deviation();
+
+        assert_eq!(std_deviation, Some(0.5), "The standard deviation of [1,2] should be 0.5");
+    }
+
+    #[test]
+    fn std_deviation_fails_on_empty_data() {
+        let decimals = vec![];
+
+        let std_deviation = decimals.as_slice().std_deviation();
+
+        assert!(std_deviation.is_none());
+    }
 }
