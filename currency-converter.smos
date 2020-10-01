@@ -1,0 +1,63 @@
+- entry:
+    header: Graph implementation that finds conversion routes across n providers given
+      2 currencies
+    state-history:
+    - state: TODO
+      time: 2020-09-25 10:51:06.235626000000
+  forest:
+  - header: 'Add more currencies: BTC, TL, UAH, lesser knowns'
+    state-history:
+    - state: TODO
+      time: 2020-09-25 10:51:42.624696000000
+  - header: Research graph implementations and what each provider must support as
+      API
+    state-history:
+    - state: TODO
+      time: 2020-09-25 10:52:05.690863000000
+  - header: Implement it
+    state-history:
+    - state: TODO
+      time: 2020-09-25 10:52:15.710378000000
+- header: Fixer API only allows EUR as base in its free plan. Replace provider or
+    fix with code?
+  state-history:
+  - state: TODO
+    time: 2020-10-01 12:40:38.536910000000
+- entry:
+    header: Rewrite API so that "turkish lira" gets parsed to a Currency
+    state-history:
+    - state: DONE
+      time: 2020-10-01 12:39:48.306901000000
+    - state: TODO
+      time: 2020-09-28 16:49:29.925970000000
+  forest:
+  - header: multi-word currencies. Maybe split by "in/into/to/as" keywords
+    state-history:
+    - state: DONE
+      time: 2020-10-01 12:39:49.039871000000
+    - state: TODO
+      time: 2020-09-28 16:49:28.781900000000
+- header: Write good README
+  state-history:
+  - state: DONE
+    time: 2020-10-01 12:39:51.404840000000
+  - state: TODO
+    time: 2020-09-25 10:51:06.931401000000
+- header: see how join_all_progress can be generalized / made into its own library
+  state-history:
+  - state: TODO
+    time: 2020-09-25 10:51:07.490618000000
+- header: 'expand stats: Variance, etc?'
+  state-history:
+  - state: TODO
+    time: 2020-09-25 10:51:08.039462000000
+- entry:
+    header: Write integration tests
+    state-history:
+    - state: TODO
+      time: 2020-09-25 10:51:08.577478000000
+  forest:
+  - header: Tests that actually fetch the providers
+    state-history:
+    - state: TODO
+      time: 2020-09-25 10:51:09.847444000000
