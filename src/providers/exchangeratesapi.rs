@@ -1,20 +1,20 @@
-use anyhow::{Context};
-use serde::{Deserialize,Serialize};
-use reqwest::Url;
+use anyhow::Context;
 use async_trait::async_trait;
+use reqwest::Url;
 use rust_decimal::Decimal;
+use serde::{Deserialize, Serialize};
 
 use crate::currency::Symbol;
-use crate::providers::provider::{BaseProvider,Provider};
+use crate::providers::provider::{BaseProvider, Provider};
 use std::collections::HashMap;
 
 pub struct ExchangeRatesApiProvider(BaseProvider);
 
-#[derive(Serialize,Deserialize)]
+#[derive(Serialize, Deserialize)]
 struct Response {
     rates: HashMap<Symbol, Decimal>,
     base: Symbol,
-    date: String
+    date: String,
 }
 
 #[async_trait]
@@ -25,23 +25,24 @@ impl Provider for ExchangeRatesApiProvider {
     fn build_url(&self, base: &Symbol, quote: &Symbol) -> Result<Url, anyhow::Error> {
         Url::parse_with_params(
             &self.0.base_url,
-            &[("base", base.to_string()), ("symbols", quote.to_string())]
-        ).context("Failed to build URL")
+            &[("base", base.to_string()), ("symbols", quote.to_string())],
+        )
+        .context("Failed to build URL")
     }
     async fn get_rate(&self, base: Symbol, quote: Symbol) -> Result<Decimal, anyhow::Error> {
         let url = self.build_url(&base, &quote)?;
         let client = reqwest::Client::new();
-        let resp = client.get(url)
-            .send()
-            .await?
-            .text()
-            .await?;
+        let resp = client.get(url).send().await?.text().await?;
 
         let parsed_rate = ExchangeRatesApiProvider::parse_rate_from_response(&self, &quote, &resp)?;
 
         Ok(parsed_rate)
     }
-    fn parse_rate_from_response(&self, quote: &Symbol, response: &str) -> Result<Decimal, anyhow::Error> {
+    fn parse_rate_from_response(
+        &self,
+        quote: &Symbol,
+        response: &str,
+    ) -> Result<Decimal, anyhow::Error> {
         serde_json::from_str::<Response>(response)
             .context("Failed to parse API response")?
             .rates
@@ -63,8 +64,8 @@ impl ExchangeRatesApiProvider {
 #[cfg(test)]
 mod tests {
     use super::ExchangeRatesApiProvider;
-    use crate::providers::provider::Provider;
     use crate::currency::Symbol;
+    use crate::providers::provider::Provider;
 
     use rust_decimal::Decimal;
 
@@ -72,7 +73,8 @@ mod tests {
     fn parses_response_correctly() {
         let quote = Symbol::USD;
         let expected_rate = Decimal::new(111, 4);
-        let response = format!(r#"
+        let response = format!(
+            r#"
             {{
                 "rates": {{
                     "USD": "{}"
@@ -80,7 +82,9 @@ mod tests {
                 "base": "EUR",
                 "date": "2020-09-23"
             }}
-        "#, expected_rate);
+        "#,
+            expected_rate
+        );
         let provider = ExchangeRatesApiProvider::new();
 
         // Note: Converting to Option to get rid of E in Result<T,E>. Otherwise,

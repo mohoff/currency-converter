@@ -1,13 +1,13 @@
 use anyhow::{Context, Result};
 
-use std::collections::{HashMap,HashSet};
-use std::fmt;
 use lazy_static::lazy_static;
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
+use std::fmt;
 use std::str::FromStr;
 use std::sync::Arc;
-use serde::{Deserialize,Serialize};
 
-#[derive(Clone,Debug,Eq,PartialEq,Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct Currency {
     pub symbol: Symbol,
     sign: String,
@@ -15,12 +15,17 @@ pub struct Currency {
     currency_type: CurrencyType,
 }
 
-#[derive(Serialize,Deserialize,Clone,Copy,Eq,PartialEq,Hash,Debug)]
+#[derive(Serialize, Deserialize, Clone, Copy, Eq, PartialEq, Hash, Debug)]
 pub enum Symbol {
-    EUR, USD, GBP, TL, ETH, BTC
+    EUR,
+    USD,
+    GBP,
+    TL,
+    ETH,
+    BTC,
 }
 
-#[derive(Debug,Eq,PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct SymbolPair {
     pub base: Symbol,
     pub quote: Symbol,
@@ -32,10 +37,10 @@ impl fmt::Display for Symbol {
     }
 }
 
-#[derive(Clone,Debug,Copy,Eq,PartialEq,Hash)]
+#[derive(Clone, Debug, Copy, Eq, PartialEq, Hash)]
 pub enum CurrencyType {
     Fiat,
-    Crypto
+    Crypto,
 }
 
 pub struct Currencies {
@@ -122,7 +127,7 @@ lazy_static! {
     };
 }
 
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub struct ParseCurrencyError(String);
 
 impl FromStr for Currency {
@@ -136,7 +141,6 @@ impl FromStr for Currency {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::Currency;
@@ -148,7 +152,11 @@ mod tests {
 
         let currency = Currency::from_str(input);
 
-        assert!(currency.is_ok(), "Currency {} should be parsed correctly", input);
+        assert!(
+            currency.is_ok(),
+            "Currency {} should be parsed correctly",
+            input
+        );
     }
 
     #[test]
@@ -157,6 +165,10 @@ mod tests {
 
         let invalid_currency = Currency::from_str(input);
 
-        assert!(invalid_currency.is_err(), "Invalid Currency {} should fail to parse", input);
+        assert!(
+            invalid_currency.is_err(),
+            "Invalid Currency {} should fail to parse",
+            input
+        );
     }
 }
