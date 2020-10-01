@@ -61,3 +61,7 @@
     state-history:
     - state: TODO
       time: 2020-09-25 10:51:09.847444000000
+- header: Write Github actions to run tests and build.
+  state-history:
+  - state: TODO
+    time: 2020-10-01 12:43:40.839562000000
