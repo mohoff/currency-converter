@@ -44,7 +44,7 @@ async fn main() -> Result<(), anyhow::Error> {
     }
 
     let futures = providers.iter()
-        .map(|p| p.get_rate(symbols.base.clone(), symbols.quote.clone()))
+        .map(|p| p.get_rate(symbols.base, symbols.quote))
         .collect::<Vec<_>>();
 
     // NOTE: must preserve order so we can associate future output with provider name
@@ -57,13 +57,6 @@ async fn main() -> Result<(), anyhow::Error> {
         .cloned()
         .filter_map(|o| o)
         .collect::<Vec<_>>();
-
-    // // Blocking version
-    // let mut rates = vec![];
-    // for p in providers {
-    //     let r = p.get_rate(input.symbol.clone(), output.symbol.clone()).await?;
-    //     rates.push(r);
-    // }
 
     let avg_rate = (&rates[..]).mean()
         .context("No data to compute mean")?;
