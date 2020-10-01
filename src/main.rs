@@ -14,8 +14,7 @@ use providers::coinmarketcap::CoinMarketCapProvider;
 use providers::exchangeratesapi::ExchangeRatesApiProvider;
 use providers::fixer::FixerProvider;
 use providers::provider::{Provider};
-use currency::Currency;
-use cli::build_cli;
+use cli::{build_cli, parse_currencies};
 use utils::Stats;
 use join_all_progress::join_all_progress;
 
@@ -24,13 +23,13 @@ async fn main() -> Result<(), anyhow::Error> {
     let matches = build_cli().get_matches();
 
     let amount = matches.value_of("amount").map(Decimal::from_str).unwrap().unwrap();
-    let input = matches.value_of("input").map(Currency::from_str).unwrap().unwrap();
-    let output = matches.values_of("output")
-        .unwrap()
-        .find_map(|s| Currency::from_str(s).ok())
-        .expect("Failed to parse output currency");
+    let symbols = parse_currencies(
+        matches.values_of("currencies")
+            .context("No currency conversion found in input")?
+            .collect::<Vec<&str>>()
+        ).context("Failed to parse currency string")?;
 
-    if input == output {
+    if symbols.base == symbols.quote {
         println!("Input and output currency are the same. Can't convert.");
         return Ok(())
     }
@@ -45,7 +44,7 @@ async fn main() -> Result<(), anyhow::Error> {
     }
 
     let futures = providers.iter()
-        .map(|p| p.get_rate(input.symbol.clone(), output.symbol.clone()))
+        .map(|p| p.get_rate(symbols.base.clone(), symbols.quote.clone()))
         .collect::<Vec<_>>();
 
     // NOTE: must preserve order so we can associate future output with provider name
@@ -77,7 +76,7 @@ async fn main() -> Result<(), anyhow::Error> {
 
     match matches.is_present("raw") {
         true => println!("{}", result),
-        _ => println!("{} {} ⟶  {} {}", amount, input.symbol.to_string().dimmed(), result, output.symbol.to_string().dimmed()),
+        _ => println!("{} {} ⟶  {} {}", amount, symbols.base.to_string().dimmed(), result, symbols.quote.to_string().dimmed()),
     }
 
     if matches.is_present("stats") {
