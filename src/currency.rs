@@ -1,3 +1,5 @@
+use anyhow::{Context, Result};
+
 use std::collections::{HashMap,HashSet};
 use std::fmt;
 use lazy_static::lazy_static;
@@ -13,9 +15,15 @@ pub struct Currency {
     currency_type: CurrencyType,
 }
 
-#[derive(Serialize,Deserialize,Clone,Eq,PartialEq,Hash,Debug)]
+#[derive(Serialize,Deserialize,Clone,Copy,Eq,PartialEq,Hash,Debug)]
 pub enum Symbol {
-    EUR, USD, GBP, ETH, BTC
+    EUR, USD, GBP, TL, ETH, BTC
+}
+
+#[derive(Debug,Eq,PartialEq)]
+pub struct SymbolPair {
+    pub base: Symbol,
+    pub quote: Symbol,
 }
 
 impl fmt::Display for Symbol {
@@ -66,6 +74,12 @@ lazy_static! {
             name: String::from("British Pounds"),
             currency_type: CurrencyType::Fiat,
         });
+        let tl = Arc::new(Currency {
+            symbol: Symbol::TL,
+            sign: String::from("₺"),
+            name: String::from("Turkish Lira"),
+            currency_type: CurrencyType::Fiat,
+        });
         let eth = Arc::new(Currency {
             symbol: Symbol::ETH,
             sign: String::from("Ξ"),
@@ -73,6 +87,7 @@ lazy_static! {
             currency_type: CurrencyType::Crypto,
         });
 
+        // fiat
         guesses.insert("usd", usd.clone());
         guesses.insert("usdollar", usd.clone());
         guesses.insert("$", usd.clone());
@@ -83,6 +98,10 @@ lazy_static! {
         guesses.insert("pound", gbp.clone());
         guesses.insert("pounds", gbp.clone());
         guesses.insert("£", gbp.clone());
+        guesses.insert("tl", tl.clone());
+        guesses.insert("₺", tl.clone());
+        guesses.insert("turkish lira", tl.clone());
+        // cyrpto
         guesses.insert("eth", eth.clone());
         guesses.insert("eths", eth.clone());
         guesses.insert("ether", eth.clone());
@@ -93,6 +112,7 @@ lazy_static! {
         currencies.insert(usd);
         currencies.insert(eur);
         currencies.insert(gbp);
+        currencies.insert(tl);
         currencies.insert(eth);
 
         Currencies {
@@ -106,15 +126,13 @@ lazy_static! {
 pub struct ParseCurrencyError(String);
 
 impl FromStr for Currency {
-    type Err = ParseCurrencyError;
+    type Err = anyhow::Error;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self, anyhow::Error> {
         CURRENCIES
             .guess(&s.to_lowercase())
             .cloned()
-            .ok_or_else(||
-                ParseCurrencyError(format!("Could not parse {} into a currency", s))
-            )
+            .context(format!("Could not parse {} into a currency", s))
     }
 }
 
