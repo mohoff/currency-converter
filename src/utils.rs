@@ -1,8 +1,7 @@
-use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
-use std::ops::Div;
+use rust_decimal::Decimal;
 use std::convert::TryInto;
-
+use std::ops::Div;
 
 pub trait Stats {
     fn mean(&self) -> Option<Decimal>;
@@ -14,14 +13,16 @@ pub trait Stats {
 impl Stats for &[Decimal] {
     fn mean(&self) -> Option<Decimal> {
         if self.is_empty() {
-            return None
+            return None;
         }
 
-        let mean = self.iter().cloned().sum::<Decimal>() / Decimal::new(
-            self.len()
-                .try_into()
-                .expect("Failed to build mean of Decimals") // Should never happen
-        , 0);
+        let mean = self.iter().cloned().sum::<Decimal>()
+            / Decimal::new(
+                self.len()
+                    .try_into()
+                    .expect("Failed to build mean of Decimals"), // Should never happen
+                0,
+            );
 
         Some(mean)
     }
@@ -33,7 +34,8 @@ impl Stats for &[Decimal] {
 
         let mean = self.mean().expect("Non-empty data should have mean"); // Should never happen
 
-        let variance = self.iter()
+        let variance = self
+            .iter()
             .map(|value| {
                 let diff = mean - value;
                 diff * diff
@@ -47,8 +49,8 @@ impl Stats for &[Decimal] {
 
 #[cfg(test)]
 mod tests {
-    use rust_decimal::Decimal;
     use super::Stats;
+    use rust_decimal::Decimal;
 
     #[test]
     fn computes_mean_of_decimals() {
@@ -56,7 +58,11 @@ mod tests {
 
         let average = decimals.as_slice().mean();
 
-        assert_eq!(average, Some(Decimal::new(15, 1)), "The mean of [1,2] should be 1.5");
+        assert_eq!(
+            average,
+            Some(Decimal::new(15, 1)),
+            "The mean of [1,2] should be 1.5"
+        );
     }
 
     #[test]
@@ -74,7 +80,11 @@ mod tests {
 
         let std_deviation = decimals.as_slice().std_deviation();
 
-        assert_eq!(std_deviation, Some(0.5), "The standard deviation of [1,2] should be 0.5");
+        assert_eq!(
+            std_deviation,
+            Some(0.5),
+            "The standard deviation of [1,2] should be 0.5"
+        );
     }
 
     #[test]

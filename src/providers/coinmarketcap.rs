@@ -1,11 +1,11 @@
-use anyhow::{Context};
-use serde::{Deserialize,Serialize};
-use reqwest::Url;
+use anyhow::Context;
 use async_trait::async_trait;
+use reqwest::Url;
 use rust_decimal::Decimal;
+use serde::{Deserialize, Serialize};
 
 use crate::currency::Symbol;
-use crate::providers::provider::{BaseProvider,Provider};
+use crate::providers::provider::{BaseProvider, Provider};
 use std::collections::HashMap;
 
 pub struct CoinMarketCapProvider {
@@ -13,23 +13,23 @@ pub struct CoinMarketCapProvider {
     access_key: String,
 }
 
-#[derive(Serialize,Deserialize)]
+#[derive(Serialize, Deserialize)]
 struct Response {
     data: ResponseData,
 }
-#[derive(Serialize,Deserialize)]
+#[derive(Serialize, Deserialize)]
 struct ResponseData {
     symbol: Symbol,
     id: usize,
     name: String,
     amount: Decimal,
     last_updated: String,
-    quote: HashMap<Symbol,Quote>,
+    quote: HashMap<Symbol, Quote>,
 }
-#[derive(Serialize,Deserialize)]
+#[derive(Serialize, Deserialize)]
 struct Quote {
     price: Decimal,
-    last_updated: String
+    last_updated: String,
 }
 
 #[async_trait]
@@ -40,13 +40,19 @@ impl Provider for CoinMarketCapProvider {
     fn build_url(&self, base: &Symbol, quote: &Symbol) -> Result<Url, anyhow::Error> {
         Url::parse_with_params(
             &self.provider.base_url,
-            &[("symbol", base.to_string()), ("amount", 1.to_string()), ("convert", quote.to_string())]
-        ).context("Failed to build URL")
+            &[
+                ("symbol", base.to_string()),
+                ("amount", 1.to_string()),
+                ("convert", quote.to_string()),
+            ],
+        )
+        .context("Failed to build URL")
     }
     async fn get_rate(&self, base: Symbol, quote: Symbol) -> Result<Decimal, anyhow::Error> {
         let url = self.build_url(&base, &quote)?;
         let client = reqwest::Client::new();
-        let resp = client.get(url)
+        let resp = client
+            .get(url)
             .header("X-CMC_PRO_API_KEY", self.access_key.clone())
             .send()
             .await?
@@ -57,14 +63,18 @@ impl Provider for CoinMarketCapProvider {
 
         Ok(parsed_rate)
     }
-    fn parse_rate_from_response(&self, quote: &Symbol, response: &str) -> Result<Decimal, anyhow::Error> {
+    fn parse_rate_from_response(
+        &self,
+        quote: &Symbol,
+        response: &str,
+    ) -> Result<Decimal, anyhow::Error> {
         Ok(serde_json::from_str::<Response>(response)
             .context("Failed to parse API response")?
-            .data.quote
+            .data
+            .quote
             .get(quote)
             .context("Failed to find quote symbol in parsed API response")?
-            .price
-        )
+            .price)
     }
 }
 
@@ -73,7 +83,9 @@ impl CoinMarketCapProvider {
         Self {
             provider: BaseProvider {
                 name: String::from("coinmarketcap.com"),
-                base_url: String::from("https://pro-api.coinmarketcap.com/v1/tools/price-conversion"),
+                base_url: String::from(
+                    "https://pro-api.coinmarketcap.com/v1/tools/price-conversion",
+                ),
             },
             access_key,
         }
@@ -83,8 +95,8 @@ impl CoinMarketCapProvider {
 #[cfg(test)]
 mod tests {
     use super::CoinMarketCapProvider;
-    use crate::providers::provider::Provider;
     use crate::currency::Symbol;
+    use crate::providers::provider::Provider;
 
     use rust_decimal::Decimal;
 
@@ -92,7 +104,8 @@ mod tests {
     fn parses_response_correctly() {
         let quote = Symbol::USD;
         let expected_rate = Decimal::new(111, 4);
-        let response = format!(r#"
+        let response = format!(
+            r#"
             {{
                 "status": {{
                     "timestamp": "2020-09-24T16:03:43.658Z",
@@ -116,7 +129,9 @@ mod tests {
                     }}
                 }}
             }}
-        "#, expected_rate);
+        "#,
+            expected_rate
+        );
         let provider = CoinMarketCapProvider::new(String::from("some-access-key"));
 
         // Note: Converting to Option to get rid of E in Result<T,E>. Otherwise,

@@ -4,10 +4,10 @@ use core::iter::FromIterator;
 use core::mem;
 use core::pin::Pin;
 use core::task::{Context, Poll};
+use futures::future::MaybeDone;
 use std::boxed::Box;
-use std::vec::Vec;
 use std::io::{stdout, Stdout, Write};
-use futures::future::{MaybeDone};
+use std::vec::Vec;
 
 // This code is based on the source of https://docs.rs/futures/0.3.5/futures/future/struct.JoinAll.html
 
@@ -29,7 +29,7 @@ where
     let elems: Box<[_]> = i.into_iter().map(MaybeDone::Future).collect();
     JoinAllProgress {
         elems: elems.into(),
-        stdout: stdout()
+        stdout: stdout(),
     }
 }
 
@@ -43,7 +43,7 @@ where
         let mut all_done = true;
 
         let mut tmp = vec![false; self.elems.len()];
-        for (i ,elem) in iter_pin_mut(self.elems.as_mut()).enumerate() {
+        for (i, elem) in iter_pin_mut(self.elems.as_mut()).enumerate() {
             if elem.poll(cx).is_pending() {
                 all_done = false;
             } else {
@@ -51,7 +51,7 @@ where
             }
         }
 
-        let num_ready = tmp.iter().fold(0, |acc,e| if *e { acc + 1 } else { acc });
+        let num_ready = tmp.iter().fold(0, |acc, e| if *e { acc + 1 } else { acc });
 
         print!("\rReady {}/{}", num_ready, tmp.len());
         self.stdout.flush().unwrap();

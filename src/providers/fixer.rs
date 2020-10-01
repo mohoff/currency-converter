@@ -1,11 +1,11 @@
-use anyhow::{Context};
-use serde::{Deserialize,Serialize};
-use reqwest::Url;
+use anyhow::Context;
 use async_trait::async_trait;
+use reqwest::Url;
 use rust_decimal::Decimal;
+use serde::{Deserialize, Serialize};
 
 use crate::currency::Symbol;
-use crate::providers::provider::{BaseProvider,Provider};
+use crate::providers::provider::{BaseProvider, Provider};
 use std::collections::HashMap;
 
 pub struct FixerProvider {
@@ -13,7 +13,7 @@ pub struct FixerProvider {
     access_key: String,
 }
 
-#[derive(Serialize,Deserialize)]
+#[derive(Serialize, Deserialize)]
 struct Response {
     rates: HashMap<Symbol, Decimal>,
     base: Symbol,
@@ -30,23 +30,28 @@ impl Provider for FixerProvider {
     fn build_url(&self, base: &Symbol, quote: &Symbol) -> Result<Url, anyhow::Error> {
         Url::parse_with_params(
             &self.provider.base_url,
-            &[("access_key", self.access_key.clone()), ("base", base.to_string()), ("symbols", quote.to_string())]
-        ).context("Failed to build URL")
+            &[
+                ("access_key", self.access_key.clone()),
+                ("base", base.to_string()),
+                ("symbols", quote.to_string()),
+            ],
+        )
+        .context("Failed to build URL")
     }
     async fn get_rate(&self, base: Symbol, quote: Symbol) -> Result<Decimal, anyhow::Error> {
         let url = self.build_url(&base, &quote)?;
         let client = reqwest::Client::new();
-        let resp = client.get(url)
-            .send()
-            .await?
-            .text()
-            .await?;
+        let resp = client.get(url).send().await?.text().await?;
 
         let parsed_rate = FixerProvider::parse_rate_from_response(&self, &quote, &resp)?;
 
         Ok(parsed_rate)
     }
-    fn parse_rate_from_response(&self, quote: &Symbol, response: &str) -> Result<Decimal, anyhow::Error> {
+    fn parse_rate_from_response(
+        &self,
+        quote: &Symbol,
+        response: &str,
+    ) -> Result<Decimal, anyhow::Error> {
         serde_json::from_str::<Response>(response)
             .context("Failed to parse API response")?
             .rates
@@ -71,8 +76,8 @@ impl FixerProvider {
 #[cfg(test)]
 mod tests {
     use super::FixerProvider;
-    use crate::providers::provider::Provider;
     use crate::currency::Symbol;
+    use crate::providers::provider::Provider;
 
     use rust_decimal::Decimal;
 
@@ -80,7 +85,8 @@ mod tests {
     fn parses_response_correctly() {
         let quote = Symbol::USD;
         let expected_rate = Decimal::new(111, 4);
-        let response = format!(r#"
+        let response = format!(
+            r#"
             {{
                 "rates": {{
                     "USD": "{}"
@@ -90,7 +96,9 @@ mod tests {
                 "timestamp": 1600865231,
                 "success": true
             }}
-        "#, expected_rate);
+        "#,
+            expected_rate
+        );
         let provider = FixerProvider::new(String::from("some-access-key"));
 
         // Note: Converting to Option to get rid of E in Result<T,E>. Otherwise,

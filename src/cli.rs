@@ -1,10 +1,10 @@
 use anyhow::*;
-use clap::{App,Arg};
+use clap::{App, Arg};
 
-use std::str::FromStr;
 use std::convert::TryInto;
+use std::str::FromStr;
 
-use crate::currency::{Currency,Symbol,SymbolPair};
+use crate::currency::{Currency, Symbol, SymbolPair};
 
 const SEPERATORS: &[&str] = &["in", "as", "into", "to", ">", "->", "-->"];
 
@@ -57,19 +57,22 @@ pub fn build_cli() -> App<'static> {
 }
 
 type Words<'a> = Vec<&'a str>;
-fn partition_words_by(seperators: &'static [&'static str]) -> Box<dyn Fn(Words) -> (Words,Words)> {
+fn partition_words_by(seperators: &'static [&'static str]) -> Box<dyn Fn(Words) -> (Words, Words)> {
     Box::new(move |input: Words| {
-        let (_, pre, post) = input.iter().fold((false, vec![], vec![]), |(mut found_seperator, mut pre, mut post), x| {
-            if found_seperator {
-                post.push(*x);
-            } else if seperators.contains(&x) {
-                found_seperator = true;
-            } else {
-                pre.push(*x);
-            }
+        let (_, pre, post) = input.iter().fold(
+            (false, vec![], vec![]),
+            |(mut found_seperator, mut pre, mut post), x| {
+                if found_seperator {
+                    post.push(*x);
+                } else if seperators.contains(&x) {
+                    found_seperator = true;
+                } else {
+                    pre.push(*x);
+                }
 
-            (found_seperator, pre, post)
-        });
+                (found_seperator, pre, post)
+            },
+        );
 
         (pre, post)
     })
@@ -78,7 +81,8 @@ fn partition_words_by(seperators: &'static [&'static str]) -> Box<dyn Fn(Words) 
 pub fn parse_currencies(words: Vec<&str>) -> Result<SymbolPair, anyhow::Error> {
     let (pre, post) = partition_words_by(SEPERATORS)(words);
 
-    let [base, quote]: [Symbol; 2] = [pre, post].iter()
+    let [base, quote]: [Symbol; 2] = [pre, post]
+        .iter()
         .map(|l| l.join(" "))
         .map(|s| Currency::from_str(&s))
         .map(|r| r.map(|c| c.symbol))
@@ -87,17 +91,14 @@ pub fn parse_currencies(words: Vec<&str>) -> Result<SymbolPair, anyhow::Error> {
         .try_into()
         .unwrap();
 
-    Ok(SymbolPair {
-        base,
-        quote,
-    })
+    Ok(SymbolPair { base, quote })
 }
 
 #[cfg(test)]
 mod tests {
-    use super::partition_words_by;
     use super::parse_currencies;
-    use crate::currency::{Symbol,SymbolPair};
+    use super::partition_words_by;
+    use crate::currency::{Symbol, SymbolPair};
 
     #[test]
     fn basic_partition() {
@@ -117,7 +118,8 @@ mod tests {
 
     #[test]
     fn compound_currency_with_junk() {
-        let (pre, post) = partition_words_by(&["in", "to"])(vec!["turkish", "lira", "to", "foo", "usd", "bar"]);
+        let (pre, post) =
+            partition_words_by(&["in", "to"])(vec!["turkish", "lira", "to", "foo", "usd", "bar"]);
 
         assert_eq!(pre, vec!["turkish", "lira"]);
         assert_eq!(post, vec!["foo", "usd", "bar"]);
@@ -150,27 +152,33 @@ mod tests {
     // parse_currencies tests
     #[test]
     fn basic_currency_parsing() {
-        let expected_pair = SymbolPair { base: Symbol::USD, quote: Symbol::EUR };
+        let expected_pair = SymbolPair {
+            base: Symbol::USD,
+            quote: Symbol::EUR,
+        };
         let option = parse_currencies(vec!["usd", "in", "eur"]).ok();
-
 
         assert_eq!(option, Some(expected_pair));
     }
 
     #[test]
     fn compound_currency_parsing() {
-        let expected_pair = SymbolPair { base: Symbol::TL, quote: Symbol::EUR };
+        let expected_pair = SymbolPair {
+            base: Symbol::TL,
+            quote: Symbol::EUR,
+        };
         let option = parse_currencies(vec!["turkish", "lira", "in", "eur"]).ok();
-
 
         assert_eq!(option, Some(expected_pair));
     }
 
     #[test]
     fn compound_currency_parsing2() {
-        let expected_pair = SymbolPair { base: Symbol::TL, quote: Symbol::TL };
+        let expected_pair = SymbolPair {
+            base: Symbol::TL,
+            quote: Symbol::TL,
+        };
         let option = parse_currencies(vec!["turkish", "lira", "in", "turkish", "lira"]).ok();
-
 
         assert_eq!(option, Some(expected_pair));
     }

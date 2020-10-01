@@ -1,5 +1,5 @@
-use reqwest::Url;
 use async_trait::async_trait;
+use reqwest::Url;
 use rust_decimal::Decimal;
 
 use crate::currency::Symbol;
@@ -14,6 +14,10 @@ pub struct BaseProvider {
 pub(crate) trait Provider {
     fn get_name(&self) -> String;
     fn build_url(&self, base: &Symbol, quote: &Symbol) -> Result<Url, anyhow::Error>;
-    fn parse_rate_from_response(&self, quote: &Symbol, response: &str) -> Result<Decimal, anyhow::Error>;
+    fn parse_rate_from_response(
+        &self,
+        quote: &Symbol,
+        response: &str,
+    ) -> Result<Decimal, anyhow::Error>;
     async fn get_rate(&self, base: Symbol, quote: Symbol) -> Result<Decimal, anyhow::Error>;
 }
