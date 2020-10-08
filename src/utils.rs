@@ -11,7 +11,7 @@ pub trait Stats {
     fn std_deviation(self) -> Option<f64>;
 }
 
-impl<'a, I: IntoIterator<Item=&'a Decimal>> Stats for I {
+impl<'a, I: IntoIterator<Item = &'a Decimal>> Stats for I {
     fn mean(self) -> Option<Decimal> {
         let mut count = 0;
         let mut total = Decimal::new(0, 0);
@@ -39,7 +39,9 @@ impl<'a, I: IntoIterator<Item=&'a Decimal>> Stats for I {
             totalsq += x * x;
         }
 
-        if count == 0 { return None }
+        if count == 0 {
+            return None;
+        }
 
         let count = Decimal::new(count, 0);
 
