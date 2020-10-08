@@ -36,8 +36,7 @@ async fn main() -> Result<(), anyhow::Error> {
     .context("Failed to parse currency string")?;
 
     if symbols.base == symbols.quote {
-        println!("Input and output currency are the same. Can't convert.");
-        return Ok(());
+        return Err(anyhow!("Input and output currency are identical."));
     }
 
     let mut providers: Vec<Box<dyn Provider>> = vec![Box::new(ExchangeRatesApiProvider::new())];
