@@ -57,8 +57,8 @@ pub fn build_cli() -> App<'static> {
 }
 
 type Words<'a> = Vec<&'a str>;
-fn partition_words_by(seperators: &'static [&'static str]) -> Box<dyn Fn(Words) -> (Words, Words)> {
-    Box::new(move |input: Words| {
+fn partition_words_by(seperators: &'static [&'static str]) -> impl Fn(Words) -> (Words, Words) {
+    move |input: Words| {
         let (_, pre, post) = input.iter().fold(
             (false, vec![], vec![]),
             |(mut found_seperator, mut pre, mut post), x| {
@@ -75,7 +75,7 @@ fn partition_words_by(seperators: &'static [&'static str]) -> Box<dyn Fn(Words) 
         );
 
         (pre, post)
-    })
+    }
 }
 
 pub fn parse_currencies(words: Vec<&str>) -> Result<SymbolPair, anyhow::Error> {
